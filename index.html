@@ -133,8 +133,8 @@
           if (!firstBit) {
             return column.appendChild(bit);
           }
-          
-          if (Math.random() > column.childElementCount / (screen.height/7)){
+          console.log(column.childElementCount / (screen.height/15));
+          if (Math.random() > column.childElementCount / (screen.height/15)){
             column.insertBefore(bit, firstBit);
           }else{
             column.removeChild(lastBit);
@@ -148,9 +148,9 @@
     const scene = {
       interval: null,
       container: null,
-      intervalDuration: 10,
+      intervalDuration: 40,
       columns: [],
-      columnCount: parseInt(screen.width/13),
+      columnCount: parseInt(screen.width/9),
       p0: 0.3,
       p1: 0.3
     }
