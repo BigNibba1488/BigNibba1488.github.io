@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Welcome to hell desu</title>
+  <style>
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+      background-color: black;
+    }
+
+    #scene {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      border: 1px solid black;
+      overflow: hidden;
+      color: #FF0000;
+      background-color: #000000;
+    }
+
+    .tool {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .tool:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .tool > span {
+      margin: 0 1rem 0 0;
+      padding: 0;
+      flex: 1;
+    }
+
+    .tool > input {
+      width: 60px;
+      border-radius: 3px;
+    }
+
+    .tool > input[type="color"]{
+      border: none;
+      border-color: transparent;
+      -webkit-appearance: none;
+    }
+    
+    input::-webkit-color-swatch {
+      border: none;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scene"></div>
+    <div style="position: absolute;bottom: 50%;text-align:center">
+        <p style="font-size: 15em;color:black;">Hell.moe</p>>
+    </div>
+
+    <div style="position: absolute;bottom: 10%;text-align:center">
+        <a style="color: greenyellow; margin-right: 5vw; font-size: 3vh;" href='/chino.html'>Chino</a>
+        <a style="color: greenyellow; margin-right: 5vw; font-size: 3vh;" href='/cirno.html'>Cirno</a>
+        <a style="color: greenyellow; margin-right: 5vw; font-size: 3vh;" href='/senko.html'>Senko</a>
+    </div>
+
+    <script>
+    const isElementOutside = (parent, child) => {
+      const parentRect = parent.getBoundingClientRect();
+      const childRect = child.getBoundingClientRect();
+      return parentRect.top >= childRect.bottom || parentRect.bottom <= childRect.top;
+    }
+
+    const getBit = (p0, p1) => {
+      const seed = Math.random();
+      if (seed <= p0) return '0';
+      if (seed <= p1 + p0) return '1';
+      return ' ';
+    }
+
+    const insertColumn = container => {
+      const column = document.createElement('div');
+      column.classList.add('column');
+      container.appendChild(column);
+      return column;
+    }
+
+    const removeColumn = (container, column) => {
+      container.removeChild(column);
+    }
+
+    const disposeColumns = (container, count) =>
+      Array.from(Array(count)).map(() => insertColumn(container));
+
+    const patchColumnCount = (columns, container, nextCount) => {
+      const lastCount = columns.length;
+      if (lastCount === nextCount) return columns;
+      const countDelta = nextCount - lastCount;
+      if (countDelta < 0) {
+        return columns.filter((column, index) => {
+          if (index < lastCount + countDelta) return true;
+          removeColumn(container, columns[index]);
+          return false;
+        })
+      }
+      const newColumns = disposeColumns(container, countDelta)
+      return [
+        ...columns,
+        ...newColumns
+      ];
+    }
+
+    const runScene = (scene) => {
+      const { container, columns, intervalDuration } = scene
+      scene.interval = setInterval(() => {
+        columns.forEach((column) => {
+          const firstBit = column.firstChild;
+          const lastBit = column.lastChild;
+          const bit = document.createElement('div');
+          bit.innerText = getBit(scene.p0, scene.p1);
+          if (!firstBit) {
+            return column.appendChild(bit);
+          }
+          
+          if (Math.random() > column.childElementCount / (screen.height/7)){
+            column.insertBefore(bit, firstBit);
+          }else{
+            column.removeChild(lastBit);
+          }
+        })
+      }, intervalDuration)
+    }
+  </script>
+
+  <script>
+    const scene = {
+      interval: null,
+      container: null,
+      intervalDuration: 10,
+      columns: [],
+      columnCount: parseInt(screen.width/13),
+      p0: 0.3,
+      p1: 0.3
+    }
+
+    const p0Input = document.querySelector('#p0-input')
+    const p1Input = document.querySelector('#p1-input')
+    const makeUpdateP = (targetName, siblingName, targetInput, siblingInput) => event => {
+      const value = Math.abs(event.target.value) > 1 ? 1 : event.target.value
+      const pTarget = Math.abs(value)
+      targetInput.value = pTarget
+      scene[targetName] = pTarget
+      const pTargetDelta = 1 - pTarget 
+      if (pTarget + scene[siblingName] > 1) {
+        scene[siblingName] = pTargetDelta
+        siblingInput.value = pTargetDelta
+      }
+      clearInterval(scene.interval)
+      runScene(scene)
+    }
+
+    scene.container = document.querySelector('#scene')
+    scene.columns = disposeColumns(scene.container, scene.columnCount)
+    runScene(scene)
+    console.log('%c Hey mf', 'font-weight: bold; font-size: 50px;color: red; text-shadow: 3px 3px 0 rgb(217,31,38) , 6px 6px 0 rgb(226,91,14) , 9px 9px 0 rgb(245,221,8) , 12px 12px 0 rgb(5,148,68) , 15px 15px 0 rgb(2,135,206) , 18px 18px 0 rgb(4,77,145) , 21px 21px 0 rgb(42,21,113)');
+
+  </script>
+</body>
+</html>

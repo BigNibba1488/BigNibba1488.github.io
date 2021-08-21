@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!--Hey mofu-->
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<title>Welcome to senko hell</title>
+	<style type="text/css">
+		body, html {
+			height: 100%;
+			overflow: hidden;
+		}
+
+		#middle_text{
+			position: relative;
+			top: 30%;
+			display: none;
+			text-align: center;
+			font-size: 15em;
+		}
+	</style>
+	<script type="text/javascript">
+		var context, canvasWidth, canvasHeight;
+		var mouseX = -1, mouseY = -1, mouseDown = false;
+		var shape=[], num_pics = 0, colorAngle = 0, firstSprite = null;
+		var linkSize = 12, chainLength = 80, shrinkRate = .98;
+		var colorOffset = { r : 0, g : 0 ,b : 0 };
+
+		function sleep(ms) {
+			return new Promise(resolve => setTimeout(resolve, ms));
+		}
+
+		var spriteClass = function(name){
+			this.position = { x : 0, y : 0 };
+			this.numpoints = this.radius = 0;
+			this.points = [];
+			this.velocity = { x : 0, y : 0 };
+			this.sine = this.cosine = 0;
+			this.parSprite = null;
+			this.childSprite = null;
+
+			this.image = new Image();
+			this.image.src = '/images/' + name + '/' + name +(Math.floor(Math.random() * 328)) + '.jpg';
+		};
+
+		spriteClass.prototype.getSinCos = function(ang){
+			this.sine = Math.sin(ang);
+			this.cosine = Math.cos(ang);
+		};
+
+		spriteClass.prototype.move = function(){
+			var n;
+			this.velocity.y++;
+			this.position.x += this.velocity.x;
+			this.position.y += this.velocity.y;
+			for(n = 0; n < this.numpoints; n++){
+				var newx = this.cosine * this.points[n].x - this.sine * this.points[n].y;
+				this.points[n].y = this.sine * this.points[n].x + this.cosine * this.points[n].y;
+				this.points[n].x = newx;
+			}
+		};
+
+		spriteClass.prototype.buildShape = function(x, y, radius, numpoints, color){
+			var n, ang, angi = Math.PI * 2 / numpoints, otherRadius;
+			this.position={'x' : x, 'y' : y};
+			this.numpoints = numpoints;
+			this.radius = radius;
+			this.ang = Math.random() * Math.PI * 2;
+			this.angi = Math.random() * 0.2 + .01;
+			this.points = [];
+			this.color = color;
+			otherRadius = radius * (1 + (!(this.numpoints % 2) && (this.numpoints > 8 || Math.random() < 0.5) ? 0.5 : 0));
+			ang = this.ang;
+			for(n = 0; n < this.numpoints; n++){
+				if(n % 2){
+					this.points[n] = {
+						'x' : this.radius * Math.sin(ang),
+						'y' : this.radius * Math.cos(ang)
+					};
+				}else{
+					this.points[n] = {
+						'x' : otherRadius * Math.sin(ang),
+						'y' : otherRadius * Math.cos(ang)
+					};
+				}
+				ang += angi;
+			}
+		};
+
+
+		spriteClass.prototype.draw = function(){
+			var n;
+
+			context.save();
+			context.beginPath();
+			context.lineWidth = 10;
+			context.translate(this.position.x, this.position.y);
+			context.moveTo(this.points[0].x, this.points[0].y);
+
+			context.drawImage(this.image, this.points[0].x, this.points[0].y)
+
+			for(n = 1; n < this.numpoints; n++){
+				context.lineTo(
+					this.points[n].x, 
+					this.points[n].y
+				);
+			}
+			context.closePath();
+			context.restore();
+
+			if(mouseDown){
+				document.body.style.backgroundColor = 'rgba(' + (511 - this.color.R >> 1) + ', ' + (511 - this.color.G >> 1) + ', ' + (511 - this.color.B >> 1) + ', 1)';
+			}
+		};
+
+		spriteClass.prototype.scale = function(ratio){
+			for(var i = 0; i < this.numpoints; i++){
+				this.points[i].x *= ratio;
+				this.points[i].y *= ratio;
+			}
+		};
+
+
+		spriteClass.prototype.age = function(chainPos){
+			chainPos = chainPos == undefined ? 0 : chainPos + 1;
+			if(chainPos > chainLength){
+				
+				this.parSprite.childSprite = null;
+				this.parSprite = null;
+				if(this.childSprite != null){
+					this.childSprite.age(chainPos);
+				}
+			}else{
+				if(this.childSprite == null){
+					if(this == firstSprite){
+						firstSprite = null;
+					}else{
+						this.parSprite.childSprite = null;
+						this.parSprite = null;
+					}
+				}else{
+					this.childSprite.age(chainPos);
+				}
+			}
+		};
+
+		function makeCanvas(){
+			var canvas = document.createElement("canvas");
+			canvasWidth = canvas.width = document.body.clientWidth;
+			canvasHeight = canvas.height = document.body.clientHeight;
+			canvas.id = 'gameCanvas';
+			document.body.appendChild(canvas);
+			return canvas;
+		}
+
+		function fadeText(element, target, callback){
+			var opacity = parseFloat(element.style.opacity);
+			if(Math.abs(target - opacity) > .1){
+				opacity += .1 * Math.sign(target - opacity);
+			}else{
+				opacity = target;
+				callback();
+			}
+			element.style.opacity = opacity;
+
+			if(opacity != target){
+				setTimeout(function(){fadeText(element, target, callback);}, 45);
+			}
+		}
+
+		function showMidText(step){
+			if(mouseX != -1 ||  mouseY != -1) return;
+
+			var mid_text = document.getElementById('middle_text');
+			if(step == undefined){
+				step = 0;
+				mid_text.style.display = 'inline-block';
+				mid_text.style.opacity = 0.1;
+				setTimeout(function(){fadeText(mid_text, 1);}, 50);
+			}
+
+			setTimeout(function(){
+				fadeText(mid_text, 0, function(){
+					mid_text.style.display = 'none';
+				});
+			}, 500);
+		}
+
+		function draw(){
+			var n;
+			context.clearRect(0, 0, canvasWidth, canvasHeight);
+			for(n = 0; n < num_pics; n++){
+				if(mouseDown){
+					shape[n].scale(1.05);
+				}
+				shape[n].move();
+				shape[n].opacity *= shrinkRate;
+				shape[n].draw();
+			}
+			if(firstSprite != null){
+				firstSprite.age();
+			}
+		}
+
+		window.onload = function(){
+			var canvas = makeCanvas();
+			context = canvas.getContext('2d');
+			var played = false;
+			canvas.onmousemove = function(evt){		
+				if(!played){
+						var somg = document.getElementById("somg"); 
+						somg.play(); 
+						played = true;
+				}
+				
+				var x, y, color;
+				x = evt.clientX;
+				y = evt.clientY;
+				var dx = x - mouseX, dy = y - mouseY;
+				color = {
+					'R' : Math.floor(128 + 100 * Math.sin(colorAngle + colorOffset.r)),
+					'G' : Math.floor(128 + 100 * Math.cos(colorAngle + colorOffset.g)),
+					'B' : Math.floor(128 - 100 * Math.sin(colorAngle + colorOffset.b))
+				};
+				if((dx * dx) + (dy * dy) > 256){
+					shape[num_pics] = new spriteClass("senko");
+					shape[num_pics].buildShape(x, y, 40, Math.floor(Math.random() * 10) + 3, color);
+					dx = dx > 5 ? 5 : (dx < -5 ? -5 : dx);
+					dy = dy > 10 ? 10 : (dy < -10 ? -10 : dy) - 3;
+					shape[num_pics].getSinCos(dx / 30.0);
+					mouseX = x;
+					mouseY = y;
+					if(!mouseDown){
+						shape[num_pics].velocity = {x : dx, y : dy};
+						if(firstSprite != null){
+							firstSprite.parSprite = shape[num_pics];
+						}
+						shape[num_pics].childSprite = firstSprite;
+						firstSprite = shape[num_pics];
+					}else{
+						shape[num_pics].velocity = {x : 6 * dx - Math.random() * 12 * dx, y : dy - 12};
+					}
+					num_pics++;
+					colorAngle += 0.25;
+					if(colorAngle > 2 * Math.PI) colorAngle -= 2 * Math.PI;
+				}
+			};
+
+			document.onmouseup = function(){
+				mouseDown = false;
+				colorOffset = {
+					r : 2.5 * Math.random() - 1,
+					g : 2.5 * Math.random() - 1,
+					b : 2.5 * Math.random() - 1
+				};
+				if(firstSprite != null){
+					firstSprite.age(10);
+				}
+			};
+
+			document.onmousedown = function(){
+				mouseDown = true;
+			};
+
+			setInterval(draw, 40);
+			setTimeout(showMidText, 1001);
+			
+		};
+
+	</script>
+</head>
+<body>
+	<div id="middle_text">
+		Try holding click ( ͡° ͜ʖ ͡°)
+	</div>
+	<audio id="somg" controls style="display:none;">
+		<source src="../mu/Sewayaki Kitsune no Senko-san OP Lengkap - Koyoi mofumofu !! ／ Senko & Shiro.mp3" type="audio/mpeg">
+		Your browser does not support the audio element.
+	  </audio>
+	<script>		
+		console.log('%c Hey mf', 'font-weight: bold; font-size: 50px;color: red; text-shadow: 3px 3px 0 rgb(217,31,38) , 6px 6px 0 rgb(226,91,14) , 9px 9px 0 rgb(245,221,8) , 12px 12px 0 rgb(5,148,68) , 15px 15px 0 rgb(2,135,206) , 18px 18px 0 rgb(4,77,145) , 21px 21px 0 rgb(42,21,113)');
+	</script>
+</body>
+</html>
