@@ -133,7 +133,6 @@
           if (!firstBit) {
             return column.appendChild(bit);
           }
-          console.log(column.childElementCount / (screen.height/15));
           if (Math.random() > column.childElementCount / (screen.height/15)){
             column.insertBefore(bit, firstBit);
           }else{
