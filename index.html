@@ -67,7 +67,7 @@
 <body>
   <div id="scene"></div>
     <div style="position: absolute;bottom: 50%;text-align:center">
-        <p style="font-size: 15em;color:black;">Hell.moe</p>>
+        <p style="font-size: 15em;color:red;">Hell.moe</p>>
     </div>
 
     <div style="position: absolute;bottom: 10%;text-align:center">
@@ -77,102 +77,7 @@
     </div>
 
     <script>
-    const isElementOutside = (parent, child) => {
-      const parentRect = parent.getBoundingClientRect();
-      const childRect = child.getBoundingClientRect();
-      return parentRect.top >= childRect.bottom || parentRect.bottom <= childRect.top;
-    }
 
-    const getBit = (p0, p1) => {
-      const seed = Math.random();
-      if (seed <= p0) return '0';
-      if (seed <= p1 + p0) return '1';
-      return ' ';
-    }
-
-    const insertColumn = container => {
-      const column = document.createElement('div');
-      column.classList.add('column');
-      container.appendChild(column);
-      return column;
-    }
-
-    const removeColumn = (container, column) => {
-      container.removeChild(column);
-    }
-
-    const disposeColumns = (container, count) =>
-      Array.from(Array(count)).map(() => insertColumn(container));
-
-    const patchColumnCount = (columns, container, nextCount) => {
-      const lastCount = columns.length;
-      if (lastCount === nextCount) return columns;
-      const countDelta = nextCount - lastCount;
-      if (countDelta < 0) {
-        return columns.filter((column, index) => {
-          if (index < lastCount + countDelta) return true;
-          removeColumn(container, columns[index]);
-          return false;
-        })
-      }
-      const newColumns = disposeColumns(container, countDelta)
-      return [
-        ...columns,
-        ...newColumns
-      ];
-    }
-
-    const runScene = (scene) => {
-      const { container, columns, intervalDuration } = scene
-      scene.interval = setInterval(() => {
-        columns.forEach((column) => {
-          const firstBit = column.firstChild;
-          const lastBit = column.lastChild;
-          const bit = document.createElement('div');
-          bit.innerText = getBit(scene.p0, scene.p1);
-          if (!firstBit) {
-            return column.appendChild(bit);
-          }
-          if (Math.random() > column.childElementCount / (screen.height/15)){
-            column.insertBefore(bit, firstBit);
-          }else{
-            column.removeChild(lastBit);
-          }
-        })
-      }, intervalDuration)
-    }
-  </script>
-
-  <script>
-    const scene = {
-      interval: null,
-      container: null,
-      intervalDuration: 40,
-      columns: [],
-      columnCount: parseInt(screen.width/9),
-      p0: 0.3,
-      p1: 0.3
-    }
-
-    const p0Input = document.querySelector('#p0-input')
-    const p1Input = document.querySelector('#p1-input')
-    const makeUpdateP = (targetName, siblingName, targetInput, siblingInput) => event => {
-      const value = Math.abs(event.target.value) > 1 ? 1 : event.target.value
-      const pTarget = Math.abs(value)
-      targetInput.value = pTarget
-      scene[targetName] = pTarget
-      const pTargetDelta = 1 - pTarget 
-      if (pTarget + scene[siblingName] > 1) {
-        scene[siblingName] = pTargetDelta
-        siblingInput.value = pTargetDelta
-      }
-      clearInterval(scene.interval)
-      runScene(scene)
-    }
-
-    scene.container = document.querySelector('#scene')
-    scene.columns = disposeColumns(scene.container, scene.columnCount)
-    runScene(scene)
     console.log('%c Hey mf', 'font-weight: bold; font-size: 50px;color: red; text-shadow: 3px 3px 0 rgb(217,31,38) , 6px 6px 0 rgb(226,91,14) , 9px 9px 0 rgb(245,221,8) , 12px 12px 0 rgb(5,148,68) , 15px 15px 0 rgb(2,135,206) , 18px 18px 0 rgb(4,77,145) , 21px 21px 0 rgb(42,21,113)');
 
   </script>
